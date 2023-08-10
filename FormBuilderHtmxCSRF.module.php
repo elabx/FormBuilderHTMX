@@ -16,10 +16,17 @@ class FormBuilderHtmxCSRF extends WireData implements Module
     public function ready()
     {
 
-        $this->addHook('/form-builder-htmx-token/', function ($e) {
+        $this->addHook('/form-builder-htmx-token/{name}', function ($e) {
+            $name = $e->arguments('name');
             return $e->session->CSRF->renderInput();
         });
-
+        $this->addHookBefore("FormBuilderProcessor::processInput", function($e){
+            $this->addHookBefore("InputfieldForm::processInput", function($e){
+                $form = $e->object;
+                $form->protectCSRF = true;
+                $e->removeHook(null);
+            });
+        });
         $this->addHookBefore("FormBuilderProcessor::render", function($event){
             if($event->object->fbForm->htmx) {
                 $fbForm = $event->object->fbForm;
@@ -27,16 +34,18 @@ class FormBuilderHtmxCSRF extends WireData implements Module
 
                 $this->addHookBefore("InputfieldForm::render", function ($event) use($fbForm, $form_name) {
                     $form = $event->object;
-                    if(!$fbForm->protectCSRF){
+                     if($fbForm->skipSessionKey){
                         $field = new InputfieldHidden();
-                        $field->attr('hx-get', '/form-builder-htmx-token/');
+                        $field->attr('hx-get', "/form-builder-htmx-token/{$form_name}");
                         $field->attr('hx-trigger', 'revealed');
-                        $field->attr('hx-target', 'this');
+                        $field->attr('hx-target', "this");
+                        $field->attr('hx-select', 'input');
+                        $field->attr('hx-swap', 'outerHTML');
                         $form->add($field);
                     }
+                    $event->removeHook(null);
                 });
             }
-
         });
     }
 }
