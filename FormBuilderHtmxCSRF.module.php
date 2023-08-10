@@ -17,6 +17,9 @@ class FormBuilderHtmxCSRF extends WireData implements Module
     {
 
         $this->addHook('/form-builder-htmx-token/{name}', function ($e) {
+            // TODO SECURITY
+            // Check referrer
+            // https://github.com/Neophen/statamic-dynamic-token/blob/master/DynamicToken/DynamicTokenController.php#L20
             $name = $e->arguments('name');
             return $e->session->CSRF->renderInput();
         });
