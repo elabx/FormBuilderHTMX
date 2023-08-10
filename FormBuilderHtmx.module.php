@@ -19,7 +19,13 @@ class FormBuilderHtmx extends WireData implements Module
 
         $this->addHook('/form-builder-htmx/{form}/', function ($e) {
             $form = $e->arguments('form');
+            //TODO Error handling when CSRF fail
             return wire('forms')->render($form);
+            /*try{
+                return wire('forms')->render($form);
+            }catch(\Exception $e){
+                return $e->getMessage();
+            }*/
         });
 
         $this->addHookBefore("FormBuilderProcessor::render", function($event){
@@ -31,6 +37,7 @@ class FormBuilderHtmx extends WireData implements Module
                     $form->attr('hx-target', "closest .FormBuilder-{$form_name}");
                     $form->attr('hx-select', ".FormBuilder-{$form_name}");
                     $form->attr('hx-trigger', 'submit');
+                    $event->removeHook(null);
                 });
             }
         });
