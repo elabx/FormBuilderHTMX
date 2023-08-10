@@ -1,4 +1,4 @@
-# FormBuilderHTMX
+# FormBuilderHtmx
 Enable HTMX on FormBuilder
 
 1. Make sure you have HTMX loaded in ther markup where you will render the form.
