@@ -5,9 +5,9 @@ class FormBuilderHtmxCSRF extends WireData implements Module
     public static function getModuleInfo()
     {
         return array(
-          'title'    => 'FormBuilder generate CSRF',
+          'title'    => 'FormBuilder HTMX CSRF Utility',
           'version'  => 1,
-          'summary'  => 'Enable HTMX in FormBuilder',
+          'summary'  => 'Enables an async request to get CSRF token',
           "icon"     => "smile-o",
           "requires" => "FormBuilder>=0.4.5",
           "autoload" => true
@@ -20,6 +20,7 @@ class FormBuilderHtmxCSRF extends WireData implements Module
             // TODO SECURITY
             // Check referrer
             // https://github.com/Neophen/statamic-dynamic-token/blob/master/DynamicToken/DynamicTokenController.php#L20
+            // TODO Use name?
             $name = $e->arguments('name');
             return $e->session->CSRF->renderInput();
         });
