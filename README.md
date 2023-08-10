@@ -15,3 +15,7 @@ Form should now render with the HTMX attributes required to be submitted through
 ## FormBuilderHtmxCSRF
 
 If FormBuilderHtmxCSRF is installed, a dynamic CSRF will be requested on the HTMX revelead event on a hidden field of the form. Useful for submitting forms cached through ProCache.
+
+## Caveats
+
+This module will break Inputfields that requires javascript such as Date with jQuery datepicker as they won't be able to be initialized on the HTMX markup append after POST.
