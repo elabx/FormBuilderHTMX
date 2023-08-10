@@ -12,4 +12,6 @@ echo $forms->render('form_name');
 
 Form should now render with the HTMX attributes required to be submitted through AJAX.
 
+## FormBuilderHtmxCSRF
+
 If FormBuilderHtmxCSRF is installed, a dynamic CSRF will be requested on the HTMX revelead event on a hidden field of the form. Useful for submitting forms cached through ProCache.
