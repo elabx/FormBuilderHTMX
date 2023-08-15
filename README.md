@@ -1,4 +1,6 @@
-# FormBuilderHtmx
+# FormBuilderHtmx (WIP)
+# Please do not use this in production. 
+
 Enable HTMX on FormBuilder
 
 1. Make sure you have HTMX loaded in ther markup where you will render the form.
