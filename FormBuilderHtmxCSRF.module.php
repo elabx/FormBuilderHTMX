@@ -5,9 +5,9 @@ class FormBuilderHtmxCSRF extends WireData implements Module
     public static function getModuleInfo()
     {
         return array(
-          'title'    => 'FormBuilder HTMX CSRF Utility',
+          'title'    => 'FormBuilder generate CSRF',
           'version'  => 1,
-          'summary'  => 'Enables an async request to get CSRF token',
+          'summary'  => 'Enable HTMX in FormBuilder',
           "icon"     => "smile-o",
           "requires" => "FormBuilder>=0.4.5",
           "autoload" => true
@@ -17,17 +17,34 @@ class FormBuilderHtmxCSRF extends WireData implements Module
     {
 
         $this->addHook('/form-builder-htmx-token/{name}', function ($e) {
-            // TODO SECURITY
-            // Check referrer
-            // https://github.com/Neophen/statamic-dynamic-token/blob/master/DynamicToken/DynamicTokenController.php#L20
-            // TODO Use name?
             $name = $e->arguments('name');
-            return $e->session->CSRF->renderInput();
+            $referer = $_SERVER['HTTP_REFERER'];
+            $config = wire('config');
+            if(!$referer) throw new Wire404Exception();
+            $is_referer = false;
+            foreach($config->httpHosts as $host){
+                $httpUrl = "http://{$host}";
+                $httpsUrl = "https://{$host}";
+                $startWithAppUrl = str_starts_with($referer, $httpUrl) || str_starts_with($referer, $httpsUrl);
+                if($startWithAppUrl) {
+                    $is_referer = true;
+                }
+            }
+            if(!$is_referer) throw new WireException();
+            return $e->session->CSRF->renderInput($name);
         });
         $this->addHookBefore("FormBuilderProcessor::processInput", function($e){
-            $this->addHookBefore("InputfieldForm::processInput", function($e){
-                $form = $e->object;
-                $form->protectCSRF = true;
+            $name = $e->object->formName;
+            $processor = $e->object;
+            $this->addHookAfter("InputfieldForm::processInput", function($e) use ($name, &$processor){
+                /** @var Session $session */
+                $session = $e->session;
+                try {
+                    $session->CSRF->validate($name);
+                    $session->CSRF->resetToken($name);
+                }catch(\Exception $err){
+                    $e->object->error("Invalid submission");
+                }
                 $e->removeHook(null);
             });
         });
@@ -35,17 +52,19 @@ class FormBuilderHtmxCSRF extends WireData implements Module
             if($event->object->fbForm->htmx) {
                 $fbForm = $event->object->fbForm;
                 $form_name = $event->object->formName;
-
+                
                 $this->addHookBefore("InputfieldForm::render", function ($event) use($fbForm, $form_name) {
                     $form = $event->object;
-                     if($fbForm->skipSessionKey){
-                        $field = new InputfieldHidden();
-                        $field->attr('hx-get', "/form-builder-htmx-token/{$form_name}");
-                        $field->attr('hx-trigger', 'revealed');
-                        $field->attr('hx-target', "this");
-                        $field->attr('hx-select', 'input');
-                        $field->attr('hx-swap', 'outerHTML');
-                        $form->add($field);
+                    if(!count($form->getErrors())) {
+                        if ($fbForm->skipSessionKey) {
+                            $field = new InputfieldHidden();
+                            $field->attr('hx-get', "/form-builder-htmx-token/{$form_name}");
+                            $field->attr('hx-trigger', 'revealed');
+                            $field->attr('hx-target', "this");
+                            $field->attr('hx-select', 'input');
+                            $field->attr('hx-swap', 'outerHTML');
+                            $form->add($field);
+                        }
                     }
                     $event->removeHook(null);
                 });
